@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no"
+    />
+    <meta
+      name="description"
+      content="Demonstration of how to use the MAXAR_extent extension using a tileset on Cesium Ion."
+    />
+    <meta name="cesium-sandcastle-labels" content="3D Tiles" />
+    <title>Cesium Demo</title>
+    <script type="text/javascript" src="../Sandcastle-header.js"></script>
+    <script
+      type="text/javascript"
+      src="../../../CesiumUnminified/Cesium.js"
+    ></script>
+  </head>
+  <body
+    class="sandcastle-loading"
+    data-sandcastle-bucket="bucket-requirejs.html"
+  >
+    <style>
+      @import url(../templates/bucket.css);
+    </style>
+    <div id="cesiumContainer" class="fullSize"></div>
+    <div id="loadingOverlay"><h1>Loading...</h1></div>
+    <div id="toolbar"></div>
+    <script id="cesium_sandcastle_script">
+      function startup(Cesium) {
+        "use strict";
+        //Sandcastle_Begin
+        Cesium.Ion.defaultAccessToken =
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlMTU5OTM0Ny0yYzlmLTQ3ZmUtOGZiZC1lNDJmNjc5YzE3NTIiLCJpZCI6NDQsImlhdCI6MTYwMzkyMjcwMX0.yhuza4aJNfOZd0Ip_MsKoydR0SBEyU7yQ3iNh-bCbjI";
+
+        function deriveResource(ionId, uri) {
+          return Cesium.IonResource.fromAssetId(ionId).then(function (
+            resource
+          ) {
+            return resource.getDerivedResource({
+              url: uri,
+            });
+          });
+        }
+
+        var viewer = new Cesium.Viewer("cesiumContainer");
+        viewer.clock.currentTime = new Cesium.JulianDate(2459150, 38100);
+
+        var scene = viewer.scene;
+        var globe = scene.globe;
+
+        globe.depthTestAgainstTerrain = false;
+
+        var tileset = viewer.scene.primitives.add(
+          new Cesium.Cesium3DTileset({
+            url: Cesium.IonResource.fromAssetId(174822),
+          })
+        );
+        viewer.zoomTo(tileset);
+
+        tileset.readyPromise
+          .then(function (tileset) {
+            var geojsonUri = tileset.extensions.MAXAR_extent.uri;
+            return deriveResource(174822, geojsonUri);
+          })
+          .then(function (geojsonResource) {
+            return Cesium.GeoJsonDataSource.load(geojsonResource);
+          })
+          .then(function (dataSource) {
+            // create list of polygonHierarchies
+            var polygonHierarchies = [];
+            var values = dataSource.entities.values;
+            var i;
+
+            for (i = 0; i < values.length; ++i) {
+              var polygon = values[i].polygon;
+              if (Cesium.defined(polygon)) {
+                polygonHierarchies.push(polygon.hierarchy.getValue());
+              }
+            }
+
+            tileset.clippingPolygon = new Cesium.ClippingPolygon.fromPolygonHierarchies(
+              {
+                polygonHierarchies: polygonHierarchies,
+                union: true,
+                enabled: true,
+              }
+            );
+
+            Sandcastle.addToggleButton(
+              "Clip",
+              tileset.clippingPolygon.enabled,
+              function (checked) {
+                tileset.clippingPolygon.enabled = checked;
+              }
+            );
+
+            Sandcastle.addToggleButton(
+              "Union",
+              tileset.clippingPolygon.union,
+              function (checked) {
+                tileset.clippingPolygon.union = checked;
+              }
+            );
+
+            viewer.dataSources.add(dataSource);
+
+            Sandcastle.addToggleButton(
+              "show GeoJSON",
+              dataSource.show,
+              function (checked) {
+                dataSource.show = checked;
+              }
+            );
+
+            Sandcastle.addToolbarButton("go to GeoJSON", function () {
+              viewer.zoomTo(dataSource);
+            });
+
+            viewer.zoomTo(dataSource);
+          })
+          .otherwise(function (e) {
+            console.log(e);
+          });
+
+        //Sandcastle_End
+        Sandcastle.finishedLoading();
+      }
+      if (typeof Cesium !== "undefined") {
+        window.startupCalled = true;
+        startup(Cesium);
+      }
+    </script>
+  </body>
+</html>
