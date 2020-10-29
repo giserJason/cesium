@@ -56,7 +56,7 @@
 
         var tileset = viewer.scene.primitives.add(
           new Cesium.Cesium3DTileset({
-            url: Cesium.IonResource.fromAssetId(174822),
+            url: Cesium.IonResource.fromAssetId(175494),
           })
         );
         viewer.zoomTo(tileset);
@@ -64,7 +64,7 @@
         tileset.readyPromise
           .then(function (tileset) {
             var geojsonUri = tileset.extensions.MAXAR_extent.uri;
-            return deriveResource(174822, geojsonUri);
+            return deriveResource(175494, geojsonUri);
           })
           .then(function (geojsonResource) {
             return Cesium.GeoJsonDataSource.load(geojsonResource);
