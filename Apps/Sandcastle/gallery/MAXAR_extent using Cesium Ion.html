@@ -72,11 +72,11 @@
           .then(function (dataSource) {
             // create list of polygonHierarchies
             var polygonHierarchies = [];
-            var values = dataSource.entities.values;
+            var entities = dataSource.entities.values;
             var i;
 
-            for (i = 0; i < values.length; ++i) {
-              var polygon = values[i].polygon;
+            for (i = 0; i < entities.length; ++i) {
+              var polygon = entities[i].polygon;
               if (Cesium.defined(polygon)) {
                 polygonHierarchies.push(polygon.hierarchy.getValue());
               }
@@ -105,6 +105,14 @@
                 tileset.clippingPolygon.union = checked;
               }
             );
+
+            // Raise the Polygon Entities in the geojson so they don't intersect
+            // with the tileset. This makes the geojson easier to see.
+            for (i = 0; i < entities.length; i++) {
+              var polygonEntity = entities[i].polygon;
+              polygonEntity.perPositionHeight = false;
+              polygonEntity.height = 500.0;
+            }
 
             viewer.dataSources.add(dataSource);
 
